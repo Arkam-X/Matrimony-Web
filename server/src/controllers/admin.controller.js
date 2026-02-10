@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Admin from "../models/admin.model.js";
 
 /* =============================
    GET ALL USERS (for table)
@@ -115,9 +116,7 @@ export const deleteUser = async (req, res) => {
 ============================= */
 export const getAllAdmins = async (req, res) => {
   try {
-    const admins = await User.find({ role: "ADMIN" }).select(
-      "name email createdAt"
-    );
+    const admins = await Admin.find().select("name email role createdAt");
 
     res.status(200).json({
       success: true,
@@ -137,7 +136,7 @@ export const getAllAdmins = async (req, res) => {
 ============================= */
 export const createAdmin = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -146,49 +145,31 @@ export const createAdmin = async (req, res) => {
       });
     }
 
-    // Prevent duplicate email
-    const existing = await User.findOne({ email });
+    const existing = await Admin.findOne({ email });
+
     if (existing) {
       return res.status(409).json({
         success: false,
-        message: "Email already exists",
+        message: "Admin with this email already exists",
       });
     }
 
-    const admin = await User.create({
+    const admin = await Admin.create({
       name,
       email,
-      password,
-      gender: "MALE", // placeholder (not used for admins)
-      dateOfBirth: new Date(),
-      maritalStatus: "NEVER_MARRIED",
-      height: "N/A",
-      weight: "N/A",
-      complexion: "N/A",
-      religion: "N/A",
-      education: "N/A",
-      deenEducation: "N/A",
-      workStatus: "JOB",
-      address: {
-        street: "N/A",
-        city: "N/A",
-        pincode: "000000",
-        nativePlace: "N/A",
-      },
-      guardian1: {
-        name: "N/A",
-        relation: "N/A",
-        mobile: "0000000000",
-      },
-      description: "System Admin",
-      role: "ADMIN",
-      status: "APPROVED",
+      password, // hashed automatically by pre-save hook
+      role: role || "MODERATOR",
     });
 
     res.status(201).json({
       success: true,
       message: "Admin created successfully",
-      admin,
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -198,6 +179,7 @@ export const createAdmin = async (req, res) => {
   }
 };
 
+
 /* =============================
    DELETE ADMIN
 ============================= */
@@ -206,34 +188,35 @@ export const deleteAdmin = async (req, res) => {
     const adminId = req.params.id;
 
     // Prevent self-delete
-    if (adminId === req.user._id.toString()) {
+    if (adminId === req.admin._id.toString()) {
       return res.status(400).json({
         success: false,
-        message: "You cannot delete your own admin account",
+        message: "You cannot delete your own account",
       });
     }
 
-    // Ensure at least one admin remains
-    const adminCount = await User.countDocuments({ role: "ADMIN" });
-
-    if (adminCount <= 1) {
-      return res.status(400).json({
-        success: false,
-        message: "At least one admin must remain in the system",
-      });
-    }
-
-    const deleted = await User.findOneAndDelete({
-      _id: adminId,
-      role: "ADMIN",
+    // Ensure at least one SUPER_ADMIN remains
+    const superAdminCount = await Admin.countDocuments({
+      role: "SUPER_ADMIN",
     });
 
-    if (!deleted) {
+    const target = await Admin.findById(adminId);
+
+    if (!target) {
       return res.status(404).json({
         success: false,
         message: "Admin not found",
       });
     }
+
+    if (target.role === "SUPER_ADMIN" && superAdminCount <= 1) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one SUPER_ADMIN must remain",
+      });
+    }
+
+    await Admin.findByIdAndDelete(adminId);
 
     res.status(200).json({
       success: true,
