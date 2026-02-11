@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { useAppStore } from '@/lib/store';
 import { UserRole } from '@/lib/types';
 import { Heart, Mail, Lock } from 'lucide-react';
+import { loginUser } from "@/lib/api";
+
 import { toast } from 'sonner';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const login = useAppStore((state) => state.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,31 +17,23 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        const currentUser = useAppStore.getState().currentUser;
-        toast.success('Login successful');
-        
-        if (currentUser?.role === UserRole.ADMIN) {
-          navigate('/admin/dashboard');
-        } else {
-          // Check user status
-          const user = useAppStore.getState().users.find((u) => u.email === email);
-          if (user) {
-            if (user.status === 'PENDING') {
-              navigate('/user/pending'); 
-            } else if (user.status === 'REJECTED') {
-              navigate('/user/rejected');
-            } else {
-              navigate('/user/dashboard');
-            }
-          }
-        }
+      const data = await loginUser(email, password);
+
+      toast.success("Login successful");
+
+      const { accessToken, user } = data;
+
+      // Store access token
+      localStorage.setItem("accessToken", accessToken);
+
+      // Navigation logic (UNCHANGED behavior)
+      if (user.role === UserRole.ADMIN) {
+        navigate("/admin/dashboard");
       } else {
-        toast.error('Invalid email or password');
+        navigate("/user/dashboard");
       }
-    } catch (error) {
-      toast.error('Login failed');
+    } catch (error: any) {
+      toast.error(error.message || "Login failed");
     } finally {
       setLoading(false);
     }

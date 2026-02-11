@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { useAppStore } from '@/lib/store';
 import { UserGender, MaritalStatus, WorkStatus } from '@/lib/types';
 import { Heart, ArrowLeft } from 'lucide-react';
+import { registerUser } from "@/lib/api";
 import { toast } from 'sonner';
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const register = useAppStore((state) => state.register);
   
   const [step, setStep] = useState(1);
   const [gender, setGender] = useState<UserGender | ''>('');
@@ -70,12 +69,46 @@ export function RegisterPage() {
       delete (userData as any).image;
     }
 
-    const success = await register(userData);
-    if (success) {
-      toast.success('Registration successful! Waiting for admin approval.');
-      navigate('/login');
-    } else {
-      toast.error('Registration failed');
+    try {
+      await registerUser({
+        name: formData.name,
+        surname: formData.surname,
+        email: formData.email,
+        password: formData.password,
+        gender,
+        dateOfBirth: new Date(formData.dob),
+        maritalStatus: formData.marital_status,
+        height: formData.height,
+        weight: formData.weight,
+        complexion: formData.color_complexion,
+        religion: formData.religion_sect,
+        education: formData.education,
+        deenEducation: formData.deeni_education,
+        workStatus: formData.work_status,
+        income: formData.income,
+        address: {
+          street: formData.street,
+          city: formData.city,
+          pincode: formData.pincode,
+          nativePlace: formData.native_place,
+        },
+        guardian1: {
+          name: formData.guardian1_name,
+          relation: formData.guardian1_relation,
+          mobile: formData.guardian1_mobile,
+        },
+        guardian2: {
+          name: formData.guardian2_name,
+          relation: formData.guardian2_relation,
+          mobile: formData.guardian2_mobile,
+        },
+        description: formData.description,
+      });
+
+      toast.success("Registration successful! Waiting for admin approval.");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed");
     }
   };
 
@@ -209,6 +242,7 @@ export function RegisterPage() {
                       required
                     >
                       <option value={MaritalStatus.NEVER_MARRIED}>Never Married</option>
+                      <option value={MaritalStatus.MARRIED}>Married</option>
                       <option value={MaritalStatus.DIVORCED}>Divorced</option>
                       <option value={MaritalStatus.WIDOWED}>Widowed</option>
                     </select>
