@@ -50,6 +50,38 @@ export const getUserById = async (req, res) => {
 };
 
 /* =============================
+   APPROVE USER
+============================= */
+export const approveUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { status: "APPROVED" },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User approved successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("APPROVE USER ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to approve user",
+    });
+  }
+};
+
+/* =============================
    REJECT USER
 ============================= */
 export const rejectUser = async (req, res) => {
@@ -81,6 +113,41 @@ export const rejectUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to reject user",
+    });
+  }
+};
+
+/* =============================
+   DASHBOARD STATS
+============================= */
+export const getDashboardStats = async (req, res) => {
+  try {
+    /* ===== User Counts ===== */
+    const totalUsers = await User.countDocuments();
+
+    const pendingUsers = await User.countDocuments({ status: "PENDING" });
+    const approvedUsers = await User.countDocuments({ status: "APPROVED" });
+    const rejectedUsers = await User.countDocuments({ status: "REJECTED" });
+
+    /* ===== Admin Count ===== */
+    const totalAdmins = await Admin.countDocuments();
+
+    /* ===== Response ===== */
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        pendingUsers,
+        approvedUsers,
+        rejectedUsers,
+        totalAdmins,
+      },
+    });
+  } catch (error) {
+    console.error("DASHBOARD STATS ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch dashboard stats",
     });
   }
 };

@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import adminAuthRoutes from "./routes/adminAuth.routes.js";
 
+import userRoutes from "./routes/user.routes.js";
+
 const app = express();
 
 /* Security */
@@ -28,5 +30,7 @@ app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
+
+app.use("/api/users", userRoutes);
 
 export default app;
