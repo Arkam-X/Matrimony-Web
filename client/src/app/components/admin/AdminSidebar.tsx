@@ -1,7 +1,7 @@
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, Shield, LogOut } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 export function AdminSidebar() {
   const location = useLocation();

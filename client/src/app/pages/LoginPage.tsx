@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
-import { UserRole } from '@/lib/types';
+import { useNavigate, Link } from 'react-router-dom';
 import { Heart, Mail, Lock } from 'lucide-react';
-import { loginUser } from "@/lib/api";
-
+import { loginUser } from "../../lib/api";
+import { useAppStore } from "@/lib/store";
 import { toast } from 'sonner';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // ✅ HOOKS must be here
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,15 +22,18 @@ export function LoginPage() {
     try {
       const data = await loginUser(email, password);
 
-      toast.success("Login successful");
-
       const { accessToken, user } = data;
 
-      // Store access token
+      // store token
       localStorage.setItem("accessToken", accessToken);
 
-      // Navigation logic (UNCHANGED behavior)
-      if (user.role === UserRole.ADMIN) {
+      // store user in Zustand
+      setCurrentUser(user);
+
+      toast.success("Login successful");
+
+      // role-based routing
+      if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
         navigate("/admin/dashboard");
       } else {
         navigate("/user/dashboard");
@@ -38,7 +44,7 @@ export function LoginPage() {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">

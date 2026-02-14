@@ -21,6 +21,7 @@ router.use(protectAdmin);
 /* User management */
 router.get("/users", getAllUsers);
 router.get("/users/:id", getUserById);
+router.patch("/users/:id/approve", approveUser)
 router.patch("/users/:id/reject", rejectUser);
 router.delete("/users/:id", deleteUser);
 

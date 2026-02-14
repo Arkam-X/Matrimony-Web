@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link } from 'react-router-dom';
 import { UserGender, MaritalStatus, WorkStatus } from '@/lib/types';
 import { Heart, ArrowLeft } from 'lucide-react';
 import { registerUser } from "@/lib/api";
@@ -106,7 +106,7 @@ export function RegisterPage() {
       });
 
       toast.success("Registration successful! Waiting for admin approval.");
-      navigate("/login");
+      navigate("/user/pending");
     } catch (error: any) {
       toast.error(error.message || "Registration failed");
     }
@@ -242,7 +242,6 @@ export function RegisterPage() {
                       required
                     >
                       <option value={MaritalStatus.NEVER_MARRIED}>Never Married</option>
-                      <option value={MaritalStatus.MARRIED}>Married</option>
                       <option value={MaritalStatus.DIVORCED}>Divorced</option>
                       <option value={MaritalStatus.WIDOWED}>Widowed</option>
                     </select>

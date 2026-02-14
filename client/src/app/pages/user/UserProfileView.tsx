@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppStore } from '@/lib/store';
 import { UserRole } from '@/lib/types';
 import { UserSidebar } from '@/app/components/user/UserSidebar';

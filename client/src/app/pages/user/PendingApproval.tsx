@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/lib/store';
 import { UserRole } from '@/lib/types';
 import { Clock, Heart } from 'lucide-react';
@@ -10,8 +10,14 @@ export function PendingApproval() {
   const logout = useAppStore((state) => state.logout);
 
   useEffect(() => {
-    if (!currentUser || currentUser.role !== UserRole.USER) {
-      navigate('/login');
+    // If an ADMIN somehow lands here → send to admin dashboard
+    if (currentUser?.role === UserRole.ADMIN) {
+      navigate("/admin/dashboard");
+    }
+
+    // If APPROVED user logs in → send to dashboard
+    if (currentUser?.role === UserRole.USER && currentUser?.status === "APPROVED") {
+      navigate("/user/dashboard");
     }
   }, [currentUser, navigate]);
 

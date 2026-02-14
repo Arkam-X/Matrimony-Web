@@ -1,27 +1,30 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/lib/store';
 import { UserRole, ProfileStatus, User } from '@/lib/types';
 import { UserSidebar } from '@/app/components/user/UserSidebar';
 import { UserNavbar } from '@/app/components/user/UserNavbar';
 import { Search, MapPin, GraduationCap, Briefcase, Heart } from 'lucide-react';
 import { toast } from 'sonner';
+import { getBrowseProfiles } from '@/lib/api';
 
 export function UserDashboard() {
   const navigate = useNavigate();
   const currentUser = useAppStore((state) => state.currentUser);
-  const getVisibleProfiles = useAppStore((state) => state.getVisibleProfiles);
-  const users = useAppStore((state) => state.users);
+
+  const [profiles, setProfiles] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [cityFilter, setCityFilter] = useState('');
 
+  // 🔐 Auth guard + approval routing
   useEffect(() => {
     if (!currentUser || currentUser.role !== UserRole.USER) {
       navigate('/login');
       return;
     }
-    
+
     if (currentUser.status !== ProfileStatus.APPROVED) {
       if (currentUser.status === ProfileStatus.PENDING) {
         navigate('/user/pending');
@@ -31,18 +34,31 @@ export function UserDashboard() {
     }
   }, [currentUser, navigate]);
 
+  // 🌐 Fetch real profiles from backend
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const data = await getBrowseProfiles();
+        setProfiles(data);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to load profiles');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
+
   if (!currentUser || currentUser.role !== UserRole.USER || !currentUser.gender) {
     return null;
   }
 
-  const user = users.find((u) => u.id === currentUser.id);
-  
-  if (user?.status === ProfileStatus.UNDER_REVIEW) {
-    toast.info('Your profile is under review', { id: 'under-review' });
+  if (loading) {
+    return null; // keep UI unchanged
   }
 
-  const profiles = getVisibleProfiles(currentUser.gender);
-
+  // 🔎 Filtering logic (UNCHANGED UI behavior)
   const filteredProfiles = profiles.filter((profile) => {
     const matchesSearch =
       profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,14 +81,6 @@ export function UserDashboard() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <UserNavbar />
         <main className="flex-1 overflow-y-auto p-6">
-          {user?.status === ProfileStatus.UNDER_REVIEW && (
-            <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
-                ⚠️ Your profile is currently under review. You can still browse profiles while we review your updates.
-              </p>
-            </div>
-          )}
-
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Browse Profiles</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -125,7 +133,7 @@ export function UserDashboard() {
                       <Heart className="w-16 h-16 text-pink-400 fill-pink-400" />
                     </div>
                   )}
-                  
+
                   <div className="p-6">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       {profile.name} {profile.surname}
@@ -133,7 +141,7 @@ export function UserDashboard() {
                     <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                       {calculateAge(profile.dob)} years
                     </p>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                         <MapPin className="w-4 h-4 mr-2" />

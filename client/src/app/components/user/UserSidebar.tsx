@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, User, Settings, LogOut, Heart } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 

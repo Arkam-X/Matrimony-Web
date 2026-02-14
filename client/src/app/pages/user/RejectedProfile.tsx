@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/lib/store';
 import { UserRole } from '@/lib/types';
 import { XCircle, Heart } from 'lucide-react';
